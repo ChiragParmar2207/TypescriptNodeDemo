@@ -1,7 +1,9 @@
 import Joi from 'joi';
-import { GENDER, GLOBAL } from '../../../constants/key.constants';
+import { GENDER, ROLES } from '../../../constants/key.constants';
+import responseMessages from '../../../constants/responseMessages';
+import regexConstants from '../../../constants/regex.constants';
 
-export const createUserSchema = Joi.object().keys({
+export const signupSchema = Joi.object().keys({
   name: Joi.string().required().messages({
     'string.base': 'Name must be a string',
     'any.required': 'Name is required',
@@ -11,67 +13,52 @@ export const createUserSchema = Joi.object().keys({
     .required()
     .messages({
       'string.base': 'Gender must be a string',
-      'any.only': 'Gender must be one of the allowed values. (Male, Female)',
+      'any.only': 'Gender must be one of the allowed values. (male, female)',
       'any.required': 'Gender is required',
     }),
-  dob: Joi.date().required().messages({
-    'date.base': 'Date of birth must be a valid date',
+  dob: Joi.string().pattern(regexConstants.dateRegex).required().messages({
+    'string.pattern.base': 'DOB must be in YYYY-MM-DD format',
     'any.required': 'Date of birth is required',
   }),
-  email: Joi.string().email().required().messages({
-    'string.email': 'Email must be a valid email address',
-    'any.required': 'Email is required',
-  }),
+  address: Joi.string().optional(),
+  latitude: Joi.number().optional(),
+  longitude: Joi.number().optional(),
+  profileImage: Joi.any().optional(),
   phone: Joi.number().required().messages({
     'number.base': 'Phone must be a number',
     'any.required': 'Phone number is required',
   }),
-  password: Joi.string()
-    .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,12}$/)
-    .required()
-    .messages({
-      'string.pattern.base': GLOBAL.PASSWORD_NOT_MATCH,
-      'string.base': 'Password must be a string',
-      'any.required': 'Password is required',
-    }),
+  email: Joi.string().email().required().messages({
+    'string.email': 'Email must be a valid email address',
+    'any.required': 'Email is required',
+  }),
+  password: Joi.string().pattern(regexConstants.passwordRegex).required().messages({
+    'string.pattern.base': responseMessages.PASSWORD_NOT_MATCH,
+    'string.base': 'Password must be a string',
+    'any.required': 'Password is required',
+  }),
   confirmPassword: Joi.any().valid(Joi.ref('password')).required().messages({
-    'any.only': GLOBAL.CONFIRM_PASSWORD_NOT_SAME,
+    'any.only': responseMessages.CONFIRM_PASSWORD_NOT_SAME,
     'any.required': 'Confirm password is required',
   }),
-});
-
-export const userLoginSchema = Joi.object().keys({
-  email: Joi.string().email().required().messages({
-    'string.email': 'Email must be a valid email address',
-    'any.required': 'Email is required',
-  }),
-  password: Joi.string()
-    .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,12}$/)
+  role: Joi.string()
+    .valid(...Object.values(ROLES))
     .required()
     .messages({
-      'string.pattern.base': GLOBAL.PASSWORD_NOT_MATCH,
-      'string.base': 'Password must be a string',
-      'any.required': 'Password is required',
+      'string.base': 'Role must be a string',
+      'any.only': 'Role must be one of the allowed values. (user, admin)',
+      'any.required': 'Role is required',
     }),
 });
 
-export const resendEmailVerificationTokenSchema = Joi.object().keys({
+export const signinSchema = Joi.object().keys({
   email: Joi.string().email().required().messages({
     'string.email': 'Email must be a valid email address',
     'any.required': 'Email is required',
   }),
-});
-
-export const verifyUserEmailSchema = Joi.object().keys({
-  token: Joi.string().required().messages({
-    'string.base': 'Token must be a string',
-    'any.required': 'Token is required',
-  }),
-});
-
-export const userForgotPasswordSchema = Joi.object().keys({
-  email: Joi.string().email().required().messages({
-    'string.email': 'Email must be a valid email address',
-    'any.required': 'Email is required',
+  password: Joi.string().pattern(regexConstants.passwordRegex).required().messages({
+    'string.pattern.base': responseMessages.PASSWORD_NOT_MATCH,
+    'string.base': 'Password must be a string',
+    'any.required': 'Password is required',
   }),
 });

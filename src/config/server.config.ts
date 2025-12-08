@@ -1,11 +1,9 @@
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 import mongoose from 'mongoose';
-import { ENVIRONMENT, DB_CONNECTION } from '../constants/key.constants';
-
-export const BASE_DIR = __dirname;
-export const ROOT_DIR = path.join(__dirname, '../../');
-export const FILE_UPLOAD_PATH = ROOT_DIR + '/uploads';
+import envVars from '../config/environmentVariables';
+import { ENVIRONMENT } from '../constants/key.constants';
+import responseMessages from '../constants/responseMessages';
 
 /**
  * A class to store server configuration
@@ -27,10 +25,10 @@ export class ServerConfig {
     dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
     // Set the developer name
-    this.developerName = process.env.DEVELOPER_NAME || 'unknown';
+    this.developerName = envVars.DEVELOPER_NAME || 'unknown';
 
     // Set the node environment
-    const nodeEnvironment = process.env.NODE_ENV;
+    const nodeEnvironment = envVars.NODE_ENV;
     switch (nodeEnvironment?.trim()) {
       case ENVIRONMENT.PRODUCTION:
         this.environment = ENVIRONMENT.PRODUCTION;
@@ -44,11 +42,11 @@ export class ServerConfig {
     }
 
     // Set the port
-    this.port = Number(process.env.PORT) || 5050;
+    this.port = Number(envVars.PORT) || 5050;
 
     // Connect with MongoDB
-    const mongodbUrl = process.env.MONGODB_URL;
-    this.database = process.env.MONGODB_DATABASE_NAME;
+    const mongodbUrl = envVars.MONGODB_URL;
+    this.database = envVars.MONGODB_DATABASE_NAME;
     this.dbURL = mongodbUrl + this.database;
     this.initializeMongoDb();
   }
@@ -57,13 +55,12 @@ export class ServerConfig {
    * Initializes the MongoDB connection.
    */
   private initializeMongoDb() {
-    console.log('==========> initializeMongoDb');
     mongoose.set('strictQuery', true);
     mongoose
       .connect(this.dbURL)
       .then(() => {
-        console.log(`========== ${DB_CONNECTION.SUCCESS} ==========`);
+        console.log(`========== ${responseMessages.DB_CONNECTION_SUCCESS} ==========`);
       })
-      .catch((error) => console.log(`========== ${DB_CONNECTION.FAIL}  ==========\n`, error));
+      .catch((error) => console.log(`========== ${responseMessages.DB_CONNECTION_FAIL}  ==========\n`, error));
   }
 }

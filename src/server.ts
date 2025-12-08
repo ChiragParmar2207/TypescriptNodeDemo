@@ -6,8 +6,13 @@ import helmet from 'helmet';
 import cors from 'cors';
 import { RequestHandler } from 'express-serve-static-core';
 import morgan from 'morgan';
+import swaggerJsDoc from 'swagger-jsdoc';
+import basicAuth from 'express-basic-auth';
+import swaggerUi from 'swagger-ui-express';
 import { iocContainer } from './inversify.config';
 import { ServerConfig } from './config/server.config';
+import envVars from './config/environmentVariables';
+import './controllers/index';
 
 // Start the server
 const server = new InversifyExpressServer(iocContainer, null, {
@@ -17,8 +22,6 @@ const server = new InversifyExpressServer(iocContainer, null, {
 // Initialize the server configuration
 const serverConfig = iocContainer.get<ServerConfig>(ServerConfig);
 serverConfig.initialize();
-
-import './controllers/index';
 
 server.setConfig((app) => {
   app.use(
@@ -42,6 +45,94 @@ server.setConfig((app) => {
 
 const app = server.build();
 
+// Start swagger setup
+const options = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Node demo project API Documentation',
+      version: '1.0.0',
+      description: 'This is the API documentation for the Node demo project.',
+      termsOfService: 'http://example.com/terms/',
+      contact: {
+        name: 'API Support',
+        url: 'https://temp.com',
+        email: 'chigsparmar07@gmail.com',
+      },
+    },
+    servers: [
+      {
+        url: 'http://localhost:5050',
+        description: 'Node demo API Documentation',
+      },
+    ],
+    components: {
+      securitySchemes: {
+        ApiKeyAuth: {
+          type: 'apiKey',
+          in: 'header',
+          name: 'Authorization',
+        },
+      },
+    },
+    security: [
+      {
+        ApiKeyAuth: [],
+      },
+    ],
+  },
+  apis: ['./src/**/*.ts'],
+};
+
+const specs = swaggerJsDoc(options);
+app.use(
+  '/api-docs',
+  basicAuth({ users: { [envVars.SWAGGER_USERNAME]: envVars.SWAGGER_PASSWORD }, challenge: true }),
+  swaggerUi.serve,
+  swaggerUi.setup(specs, {
+    swaggerOptions: {
+      persistAuthorization: true,
+    },
+  })
+);
+// End swagger setup
+
+/**
+ * @swagger
+ *  tags:
+ *    name: Default
+ *    description: Health Document
+ */
+
+/**
+ * @swagger
+ * /:
+ *   get:
+ *     summary: Returns a welcome message
+ *     description: This endpoint returns a 'Hello, World!' message.
+ *     tags: [Default]
+ *     responses:
+ *       200:
+ *         description: Success
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Hello, World!"
+ *       500:
+ *         description: Internal Server Error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Internal Server Error"
+ */
 app.get('/', (_req: Request, res: Response) => {
   try {
     return res.status(200).json({ message: 'Hello, World!' });

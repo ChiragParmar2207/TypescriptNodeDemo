@@ -58,15 +58,11 @@ const userSchema: Schema<UserDocument> = new Schema<UserDocument>({
     type: {
       type: String,
       enum: ['Point'],
-      required: true,
+      default: 'Point',
     },
     coordinates: {
       type: [Number], // [longitude, latitude]
-      required: false,
-    },
-    default: {
-      type: 'Point',
-      coordinates: [0, 0],
+      default: [0, 0],
     },
   },
   profileImage: {
