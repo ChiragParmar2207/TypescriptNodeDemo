@@ -1,4 +1,3 @@
-// import 'newrelic';
 import 'reflect-metadata';
 import { InversifyExpressServer } from 'inversify-express-utils';
 import express, { Request, Response } from 'express';
@@ -37,7 +36,6 @@ server.setConfig((app) => {
   const cacheTime = 31536000;
   app.use(express.static('assets', { maxAge: cacheTime }) as RequestHandler);
 
-  //
   app.use(express.json({ limit: '50mb' }) as RequestHandler);
   app.use(express.urlencoded({ limit: '50mb', extended: true, parameterLimit: 50000 }) as RequestHandler);
 });
@@ -46,10 +44,10 @@ const app = server.build();
 
 app.get('/', (_req: Request, res: Response) => {
   try {
-    res.status(200).json({ message: 'Hello, World!' });
+    return res.status(200).json({ message: 'Hello, World!' });
   } catch (error) {
     console.log('error', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
