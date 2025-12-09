@@ -5,13 +5,16 @@ import bodyParser from 'body-parser';
 import helmet from 'helmet';
 import cors from 'cors';
 import { RequestHandler } from 'express-serve-static-core';
-import morgan from 'morgan';
 import swaggerJsDoc from 'swagger-jsdoc';
 import basicAuth from 'express-basic-auth';
 import swaggerUi from 'swagger-ui-express';
 import { iocContainer } from './inversify.config';
 import { ServerConfig } from './config/server.config';
 import envVars from './config/environmentVariables';
+import { requestLogger } from './middleware/requestLogger';
+import { errorHandler } from './middleware/errorHandler';
+import logger from './utils/logger';
+import responseMessages from './constants/responseMessages';
 import './controllers/index';
 
 // Start the server
@@ -35,7 +38,6 @@ server.setConfig((app) => {
   // app.use(bodyParser.urlencoded({ limit: '50mb', extended: true, parameterLimit: 50000 }) as RequestHandler);
   app.use(helmet());
   app.use(cors());
-  app.use(morgan('dev'));
   const cacheTime = 31536000;
   app.use(express.static('assets', { maxAge: cacheTime }) as RequestHandler);
 
@@ -44,6 +46,8 @@ server.setConfig((app) => {
 });
 
 const app = server.build();
+
+app.use(requestLogger);
 
 // Start swagger setup
 const options = {
@@ -133,14 +137,16 @@ app.use(
  *                   type: string
  *                   example: "Internal Server Error"
  */
-app.get('/', (_req: Request, res: Response) => {
+app.get('/', (_request: Request, response: Response) => {
   try {
-    return res.status(200).json({ message: 'Hello, World!' });
+    return response.status(200).json({ message: 'Hello, World!' });
   } catch (error) {
-    console.log('error', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    logger.error('health_check_error', { error: (error as Error).message });
+    return response.status(500).json({ error: (error as Error).message || responseMessages.INTERNAL_SERVER_ERROR });
   }
 });
+
+app.use(errorHandler);
 
 app.listen(app.get('port'), () => {
   console.log(
